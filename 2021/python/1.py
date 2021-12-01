@@ -9,7 +9,23 @@ def main():
         larger += int(depths[i] - depths[i - 1] > 0)
 
     # print the result
-    print(larger)
+    print("PART ONE:", larger)
+
+    # PART TWO: sliding window
+    larger = 0
+
+    # start a sliding window sum
+    window = sum(depths[:3])
+
+    # loop over the depths
+    for i in range(1, len(depths) - 2):
+        # calculate the new window, compare and possibly add
+        new_window = sum(depths[i:i + 3])
+        larger += int(new_window > window)
+        window = new_window
+
+    # print the result
+    print("PART TWO:", larger)
 
 
 if __name__ == "__main__":
