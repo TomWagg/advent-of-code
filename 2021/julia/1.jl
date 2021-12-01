@@ -11,5 +11,19 @@ open("../inputs/1.txt", "r") do input
     end;
 
     # print out the result!
-    println(larger)
+    println("PART ONE: ", larger)
+
+    # PART TWO
+    larger = 0
+
+    # start a sliding window sum of the first three items
+    window = sum(depths[1:3])
+    for i in 2:length(depths) - 2
+        # add one every time the new window is larger than the window
+        new_window = sum(depths[i:i + 2])
+        larger += convert(Int, new_window > window)
+        window = new_window
+    end;
+
+    println("PART TWO: ", larger)
 end;
