@@ -1,18 +1,18 @@
 def main():
-    x, y = 0, 0
+    pos, depth = 0, 0
     with open("../inputs/2.txt") as input:
         for line in input:
             direction, magnitude = line.split()
             if direction == "forward":
-                x += int(magnitude)
+                pos += int(magnitude)
             elif direction == "down":
-                y += int(magnitude)
+                depth += int(magnitude)
             elif direction == "up":
-                y -= int(magnitude)
+                depth -= int(magnitude)
             else:
                 raise ValueError()
 
-    print(x * y)
+    print(pos * depth)
 
 
 if __name__ == "__main__":

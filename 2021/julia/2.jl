@@ -1,21 +1,21 @@
 function move_ship(file)
-    x, y = 0, 0
+    pos, depth = 0, 0
     open("../inputs/2.txt", "r") do input
         for line in eachline(input)
             direction, magnitude = split(line)
             mag_int = parse.(Int, magnitude)
             if direction == "forward"
-                x += mag_int
+                pos += mag_int
             elseif direction == "down"
-                y += mag_int
+                depth += mag_int
             elseif direction == "up"
-                y -= mag_int
+                depth -= mag_int
             else
                 error("Invalid direction")
             end;
         end;
     end;
-    return x * y
+    return pos * depth
 end;
 
 function main()
