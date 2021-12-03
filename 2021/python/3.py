@@ -15,10 +15,6 @@ def get_most_common(diagnostics, digit):
     return 0 if total < 0.5 else 1
 
 
-def get_least_common(diagnostics, digit):
-    return 1 - get_most_common(diagnostics, digit)
-
-
 def main():
     # read in diagnostics
     with open("../inputs/3.txt") as input:
