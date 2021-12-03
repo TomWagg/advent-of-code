@@ -6,6 +6,19 @@ def binary_to_decimal(binary):
     return decimal
 
 
+def get_most_common(diagnostics, digit):
+    total = 0
+    for i in range(len(diagnostics)):
+        total += int(diagnostics[i][digit])
+    total /= len(diagnostics)
+
+    return 0 if total < 0.5 else 1
+
+
+def get_least_common(diagnostics, digit):
+    return 1 - get_most_common(diagnostics, digit)
+
+
 def main():
     # read in diagnostics
     with open("../inputs/3.txt") as input:
@@ -19,18 +32,10 @@ def main():
 
     # loop over each digit
     for i in range(n_digit):
-        total = 0
-
-        # loop over each diagnostic and sum the digits
-        for j in range(len(diagnostics)):
-            total += int(diagnostics[j][i])
-
-        # divide by the total number of diagnostics
-        total /= len(diagnostics)
-
         # this gives most common and least common
-        most_common += str(0) if total < 0.5 else str(1)
-        least_common += str(1) if total < 0.5 else str(0)
+        most = get_most_common(diagnostics, i)
+        most_common += str(most)
+        least_common += str(1 - most)
 
     # convert numbers to decimals and multiply
     power = binary_to_decimal(most_common) * binary_to_decimal(least_common)
