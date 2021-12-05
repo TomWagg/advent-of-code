@@ -115,5 +115,6 @@ def main():
     print("PART ONE:", find_first_winner(values, boards))
     print("PART TWO:", find_last_winner(values, boards))
 
-main()
 
+if __name__ == "__main__":
+    main()
