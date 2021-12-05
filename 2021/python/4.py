@@ -94,23 +94,19 @@ def main():
         values = list(map(int, input.readline().split(",")))
 
         # start a new board
-        current_board = None
+        current_board = []
         for line in input:
             # if a new line occurs, save the current board and start a new one
-            if line == "\n" and current_board is not None:
+            if line == "\n" and current_board != []:
                 boards.append(current_board)
-                current_board = None
+                current_board = []
             # otherwise flatten out the board (combine rows)
             else:
                 new_row = list(map(int, line.strip("\n").split()))
-                if current_board is None:
-                    current_board = new_row
-                else:
-                    current_board.extend(new_row)
+                current_board.extend(new_row)
 
         # don't miss the last board!
-        if current_board is not None:
-            boards.append(current_board)
+        boards.append(current_board)
 
     print("PART ONE:", find_first_winner(values, boards))
     print("PART TWO:", find_last_winner(values, boards))
