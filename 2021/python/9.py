@@ -1,11 +1,15 @@
 def find_minima(heights, n_col):
+    # find the local minima in the caves
     minima = []
     for i in range(len(heights)):
         min_nearest = None
+        # check in the adjacent squares
         for index in [i - 1, i + 1, i - n_col, i + n_col]:
             if index > 0 and index < len(heights):
+                # reset minimum
                 if min_nearest is None or heights[index] < min_nearest:
                     min_nearest = heights[index]
+        # add to the minima list
         if heights[i] < min_nearest:
             minima.append(i)
     return minima
@@ -25,8 +29,10 @@ def grow_basin(heights, position, members, n_col):
     if heights[position] == 9 or position in members:
         return members
     else:
+        # add the new basin member
         members.append(position)
 
+        # create a list of directions that keep it in bounds
         directions = []
         if position - n_col >= 0:
             directions.append(-n_col)
@@ -37,6 +43,7 @@ def grow_basin(heights, position, members, n_col):
         if (position + 1) % n_col != 0:
             directions.append(1)
 
+        # check for members in those directions
         for direction in directions:
             members = grow_basin(heights, position + direction, members, n_col)
         return members
