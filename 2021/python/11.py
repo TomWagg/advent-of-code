@@ -1,7 +1,7 @@
 # I have folded and started importing numpy haha
 import numpy as np
 
-def flash_octopuses(octopuses, steps=1):
+def flash_octopuses(octopuses, steps=1, break_on_all_flash=False):
     n_flash = 0
     while steps > 0:
         # increase every octopus energy by 1
@@ -36,22 +36,33 @@ def flash_octopuses(octopuses, steps=1):
         octopuses[has_flashed] = 0
 
         steps -= 1
+
+        if break_on_all_flash and np.all(octopuses == 0):
+            return octopuses, steps
     return octopuses, n_flash
 
 
-
-def main():
-    # I googled and it is octopuses not octopi: https://qz.com/1446229/let-us-finally-resolve-the-octopuses-v-octopi-debate/
+def get_octopuses():
+     # I googled and it is octopuses not octopi: https://qz.com/1446229/let-us-finally-resolve-the-octopuses-v-octopi-debate/
     octopuses = np.zeros((10, 10)).astype(int)
-    n_col = 0
     with open("../inputs/11.txt") as input:
         i = 0
         for line in input:
             octopuses[i] = np.array(list(map(int, list(line.strip()))))
             i += 1
+    return octopuses
 
+
+def main():
+    octopuses = get_octopuses()
     _, flashes = flash_octopuses(octopuses, steps=100)
     print("PART ONE:", flashes)
+
+
+    octopuses = get_octopuses()
+    initial = 500
+    _, step = flash_octopuses(octopuses, steps=initial, break_on_all_flash=True)
+    print("PART TWO:", initial - step)
 
 
 if __name__ == "__main__":
