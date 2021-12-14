@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # grabbed this from here:
 # https://stackoverflow.com/questions/8560440/removing-duplicate-columns-and-rows-from-a-numpy-2d-array
 def unique_rows(a):
