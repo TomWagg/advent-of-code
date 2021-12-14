@@ -33,7 +33,6 @@ def count_overlaps(lines, max_x, max_y):
             for x, y in zip(x_range, y_range):
                 grid[x][y] += 1
 
-
     # sum up the number of points that have at least 2 overlaps
     overlaps = sum([int(item >= 2) for row in grid for item in row])
     return overlaps

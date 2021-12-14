@@ -1,6 +1,7 @@
 # I have folded and started importing numpy haha
 import numpy as np
 
+
 def flash_octopuses(octopuses, steps=1, break_on_all_flash=False):
     n_flash = 0
     while steps > 0:
@@ -43,7 +44,8 @@ def flash_octopuses(octopuses, steps=1, break_on_all_flash=False):
 
 
 def get_octopuses():
-     # I googled and it is octopuses not octopi: https://qz.com/1446229/let-us-finally-resolve-the-octopuses-v-octopi-debate/
+    # I googled and it is octopuses not octopi
+    # https://qz.com/1446229/let-us-finally-resolve-the-octopuses-v-octopi-debate/
     octopuses = np.zeros((10, 10)).astype(int)
     with open("../inputs/11.txt") as input:
         i = 0
@@ -57,7 +59,6 @@ def main():
     octopuses = get_octopuses()
     _, flashes = flash_octopuses(octopuses, steps=100)
     print("PART ONE:", flashes)
-
 
     octopuses = get_octopuses()
     initial = 500
