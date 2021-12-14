@@ -1,23 +1,38 @@
-from collections import Counter
+from collections import defaultdict
 
 
 def polymerise(polymer, pair_insertions, steps=1):
-    """ simple solution, brute force add everything """
-    while steps > 0:
-        # always the same starting character
-        new_polymer = polymer[0]
+    """ better version, just keep track of counts not order """
+    # count how many each element are in the original polymer
+    element_counts = defaultdict(int)
+    for i in range(len(polymer)):
+        element_counts[polymer[i]] += 1
 
-        # run over the pairs currently in the polymer
-        for i in range(len(polymer) - 1):
-            # add the new pair to the polymer plus the suffix
-            pair = polymer[i:i+2]
-            new_polymer += pair_insertions[pair] + pair[1]
-        
-        # update polymer
-        polymer = new_polymer
+    # do the same for all possible pairs in the polymer
+    pairs = defaultdict(int)
+    for i in range(len(polymer) - 1):
+        pairs[polymer[i:i+2]] += 1
+
+    # for each step in the polymerisation
+    while steps > 0:
+        # create a new list of pairs
+        new_pairs = defaultdict(int)
+        for key in pairs:
+            # add the two new pairs produced by this pair
+            new_pairs[key[0] + pair_insertions[key]] += pairs[key]
+            new_pairs[pair_insertions[key] + key[1]] += pairs[key]
+
+            # add to the element count for the new element
+            element_counts[pair_insertions[key]] += pairs[key]
+
+        # update the pairs to the new pairs
+        pairs = new_pairs
 
         steps -= 1
-    return polymer
+
+    # get the counts and return the difference between the max and min
+    counts = element_counts.values()
+    return max(counts) - min(counts)
 
 
 def main():
@@ -33,12 +48,8 @@ def main():
                 pair_insertions[pair] = element
 
     # evolve the polymer over time
-    polymer = polymerise(template, pair_insertions, steps=10)
-
-    # find the most and least common elements
-    counter = Counter(polymer).most_common()
-    most, least = counter[0], counter[-1]
-    print("PART ONE:", most[1] - least[1])
+    print("PART ONE:", polymerise(template, pair_insertions, steps=10))
+    print("PART TWO:", polymerise(template, pair_insertions, steps=40))
 
 
 if __name__ == "__main__":
