@@ -27,14 +27,31 @@ def shortest_path(risks):
     return distances[-1, -1].astype(int)
 
 
+def grow_risks(risks):
+    """ create the larger risk grid """
+    rows, cols = risks.shape
+    new_risks = np.zeros((rows * 5, cols * 5))
+
+    for i in range(5):
+        for j in range(5):
+            risk_block = np.mod(risks + (i + j), 9)
+            risk_block[risk_block == 0] = 9
+            new_risks[i * rows:(i + 1) * rows, j * cols:(j + 1) * cols] = risk_block
+
+    return new_risks.astype(int)
+
+
 def main():
     risks = []
     with open("../inputs/15.txt", "r") as input:
         for line in input:
             risks.append(list(map(int, list(line.strip()))))
     risks = np.array(risks).astype(int)
-
     print("PART ONE:", shortest_path(risks))
+
+    # grow the risk grid and repeat (this is a bit slow but still under a minute)
+    risks = grow_risks(risks)
+    print("PART TWO:", shortest_path(risks))
 
 
 if __name__ == "__main__":
