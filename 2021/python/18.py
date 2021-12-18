@@ -1,3 +1,6 @@
+from math import floor, ceil
+
+
 class Pear():
     def __init__(self, id, children=[], value=None, parent=None, depth=0):
         self.id = id
@@ -40,8 +43,12 @@ class Pear():
         if self.children is not None:
             if self.depth >= 4:
                 self.explode()
-            for child in self.children:
-                child.reduce()
+            else:
+                for child in self.children:
+                    child.reduce()
+        else:
+            if self.value > 9:
+                self.split()
 
     def explode(self):
         # only explode pairs with 2 numbers as children
@@ -57,17 +64,46 @@ class Pear():
         if right is not None:
             right.value += self.children[1].value
 
-        self.parent.children[self.self_index()] = Pear(id=self.id, parent=self.parent,
-                                                       children=None, depth=self.depth, value=0)
+        self.children = None
+        self.value = 0
 
-    def recursive_print(self, end="\n"):
+        parent = self.parent
+        while parent.parent is not None:
+            parent = parent.parent
+        print("AFTER EXPLODE: ", end="")
+        parent.recursive_print()
+
+        if left is not None and left.value > 9:
+            left.split()
+        if right is not None and right.value > 9:
+            right.split()
+
+    def split(self):
+        assert self.value is not None
+        left, right = floor(self.value / 2), ceil(self.value / 2)
+        self.value = None
+        self.children = []
+        self.children.append(Pear(id=self.id, children=None, value=left, depth=self.depth + 1))
+        self.children.append(Pear(id=self.id, children=None, value=right, depth=self.depth + 1))
+
+        parent = self.parent
+        while parent.parent is not None:
+            parent = parent.parent
+        print("AFTER SPLIT:   ", end="")
+        parent.recursive_print()
+
+        if self.depth >= 4:
+            self.explode()
+
+    def recursive_print(self, end="\n", suffix=","):
         if self.children is not None:
             print("[", end="")
-            for child in self.children:
-                child.recursive_print(end="")
-            print("]", end=end)
+            for i, child in enumerate(self.children):
+                child.recursive_print(end="", suffix="" if i == len(self.children) - 1 else ",")
+            suffix = "" if end == "\n" else suffix
+            print("]" + suffix, end=end)
         else:
-            print(self.value, end="")
+            print(str(self.value) + suffix, end="")
 
 
 def main():
@@ -90,16 +126,16 @@ def main():
                 elif char.isnumeric():
                     # add values to pairs
                     current.children.append(Pear(id=i, parent=current, children=None,
-                                                 value=int(char), depth=current.depth))
+                                                 value=int(char), depth=current.depth + 1))
                 elif char == "]":
                     # end the current pair and move back to the parent
                     current = current.parent
             pairs.append(base_pair)
 
     for pair in pairs:
+        print("AFTER ADDITION ", end="")
         pair.recursive_print()
         pair.reduce()
-        pair.recursive_print()
         print()
 
 
