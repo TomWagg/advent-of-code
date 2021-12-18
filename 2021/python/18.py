@@ -67,18 +67,11 @@ class Pear():
             self.explode_tree()
             done = self.split_tree()
 
-
     def explode(self):
         # only explode pairs with 2 numbers as children
         assert len(self.children) == 2
         assert self.children[0].value is not None
         assert self.children[1].value is not None
-
-        printer = self
-        while printer.parent is not None:
-            printer = printer.parent
-        print("ABOUT TO EXPLODE:   ", end="")
-        printer.recursive_print()
 
         left = self.get_adjacent("left")
         if left is not None:
@@ -91,38 +84,14 @@ class Pear():
         self.children = None
         self.value = 0
 
-        # printer = self
-        # while printer.parent is not None:
-        #     printer = printer.parent
-        # print("AFTER EXPLODE: ", end="")
-        # printer.recursive_print()
-
-        # if left is not None and left.value > 9:
-        #     left.split()
-
-        # if right is not None and right.value > 9:
-        #     right.split()
-
     def split(self):
         assert self.value is not None
-
-        printer = self
-        while printer.parent is not None:
-            printer = printer.parent
-        print("ABOUT TO SPLIT:     ", end="")
-        printer.recursive_print()
 
         left, right = floor(self.value / 2), ceil(self.value / 2)
         self.value = None
         self.children = []
         self.children.append(Pear(id=self.id, parent=self, children=None, value=left, depth=self.depth + 1))
         self.children.append(Pear(id=self.id, parent=self, children=None, value=right, depth=self.depth + 1))
-
-        # printer = self
-        # while printer.parent is not None:
-        #     printer = printer.parent
-        # print("AFTER SPLIT:   ", end="")
-        # printer.recursive_print()
 
         if self.depth >= 4:
             self.explode()
@@ -187,36 +156,16 @@ def main():
                     elif char.isnumeric():
                         # add values to pairs
                         current.children.append(Pear(id=i, parent=current, children=None,
-                                                    value=int(char), depth=current.depth + 1))
+                                                     value=int(char), depth=current.depth + 1))
                     elif char == "]":
                         # end the current pair and move back to the parent
                         current = current.parent
                 pairs.append(base_pair)
 
-    # pairs[0].recursive_print()
-    # pairs[0].reduce()
-    # pairs[0].recursive_print()
-    # return
-
-
     final_pair = pairs[0]
     for i in range(len(pairs) - 1):
-        print("ABOUT TO ADD        ", end="")
-        final_pair.recursive_print()
         final_pair = final_pair.add(pairs[i + 1])
-
-        # final_pair.children[0].recursive_print()
-        # final_pair.children[0].children[0].recursive_print()
-        # final_pair.children[0].children[1].recursive_print()
-        # final_pair.children[0].children[1].children[0].recursive_print()
-        # final_pair.children[0].children[1].children[0].children[0].recursive_print()
-        # print(final_pair.children[0].children[1].children[0].children[0].get_adjacent("left"))
-
         final_pair.reduce()
-        print()
-
-    print("FINAL")
-    final_pair.recursive_print()
 
     print("PART ONE:", final_pair.magnitude())
 
