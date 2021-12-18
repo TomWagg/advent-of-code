@@ -95,6 +95,21 @@ class Pear():
         if self.depth >= 4:
             self.explode()
 
+    def deepen(self):
+        self.depth += 1
+        if self.children is not None:
+            for child in self.children:
+                child.deepen()
+
+    def add(self, pair):
+        self.deepen()
+        pair.deepen()
+        new_base = Pear(id=-1, children=[self, pair], parent=None, value=None, depth=0)
+        self.parent = new_base
+        pair.parent = new_base
+        new_base.recursive_print()
+        return new_base
+
     def recursive_print(self, end="\n", suffix=","):
         if self.children is not None:
             print("[", end="")
@@ -132,10 +147,12 @@ def main():
                     current = current.parent
             pairs.append(base_pair)
 
-    for pair in pairs:
+    final_pair = None
+    for i in range(len(pairs) - 1):
+        final_pair = pairs[i].add(pairs[i + 1])
         print("AFTER ADDITION ", end="")
-        pair.recursive_print()
-        pair.reduce()
+        final_pair.recursive_print()
+        final_pair.reduce()
         print()
 
 
