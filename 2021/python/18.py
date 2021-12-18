@@ -36,6 +36,13 @@ class Pear():
 
         return drill_here
 
+    def reduce(self):
+        if self.children is not None:
+            if self.depth >= 4:
+                self.explode()
+            for child in self.children:
+                child.reduce()
+
     def explode(self):
         # only explode pairs with 2 numbers as children
         assert len(self.children) == 2
@@ -68,7 +75,7 @@ def main():
     with open("../inputs/18.txt", "r") as input:
         for line in input:
             # create the base pair and set cursor to it
-            base_pair = Pear(id=-1)
+            base_pair = Pear(id=-1, children=[], value=None, parent=None, depth=0)
             current = base_pair
 
             # loop over every character
@@ -91,11 +98,10 @@ def main():
 
     for pair in pairs:
         pair.recursive_print()
+        pair.reduce()
+        pair.recursive_print()
+        print()
 
-    explode_me = pair.children[0].children[0].children[0].children[0]
-    explode_me.explode()
-
-    pair.recursive_print()
 
 if __name__ == "__main__":
     main()
