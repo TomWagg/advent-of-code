@@ -36,6 +36,23 @@ class Pear():
 
         return drill_here
 
+    def explode(self):
+        # only explode pairs with 2 numbers as children
+        assert len(self.children) == 2
+        assert self.children[0].value is not None
+        assert self.children[1].value is not None
+
+        left = self.get_adjacent("left")
+        if left is not None:
+            left.value += self.children[0].value
+
+        right = self.get_adjacent("right")
+        if right is not None:
+            right.value += self.children[1].value
+
+        self.parent.children[self.self_index()] = Pear(id=self.id, parent=self.parent,
+                                                       children=None, depth=self.depth, value=0)
+
     def recursive_print(self, end="\n"):
         if self.children is not None:
             print("[", end="")
@@ -75,10 +92,10 @@ def main():
     for pair in pairs:
         pair.recursive_print()
 
-    zero_leaf = pair.children[0].children[0].children[0]
-    four_leaf = pair.children[0].children[0].children[1].children[0]
+    explode_me = pair.children[0].children[0].children[0].children[0]
+    explode_me.explode()
 
-    print(four_leaf.get_adjacent("left"), four_leaf.get_adjacent("right"))
+    pair.recursive_print()
 
 if __name__ == "__main__":
     main()
