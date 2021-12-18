@@ -20,19 +20,17 @@ class Pear():
 
     def get_adjacent(self, direction):
         current = self
-        current_index = current.parent.children.index(current)
         limit = 0 if direction == "left" else len(current.parent.children) - 1
-        while current_index == limit:
+        while current.self_index() == limit:
             current = current.parent
             if current.parent is None:
                 return None
 
-            current_index = current.parent.children.index(current)
             limit = 0 if direction == "left" else len(current.parent.children) - 1
 
         sign = -1 if direction == "left" else 1
         index = -1 if direction == "left" else 0
-        drill_here = current.parent.children[current_index + sign]
+        drill_here = current.parent.children[current.self_index() + sign]
         while drill_here.value is None:
             drill_here = drill_here.children[index]
 
