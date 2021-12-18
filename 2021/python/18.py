@@ -1,4 +1,5 @@
 from math import floor, ceil
+from copy import deepcopy
 
 
 class Pear():
@@ -135,7 +136,7 @@ class Pear():
                 print(str(self.value) + suffix, end="")
 
 
-def main():
+def get_pairs():
     pairs = []
     with open("../inputs/18.txt", "r") as input:
         for line in input:
@@ -161,13 +162,33 @@ def main():
                         # end the current pair and move back to the parent
                         current = current.parent
                 pairs.append(base_pair)
+    return pairs
 
+
+def main():
+    pairs = get_pairs()
     final_pair = pairs[0]
     for i in range(len(pairs) - 1):
         final_pair = final_pair.add(pairs[i + 1])
         final_pair.reduce()
 
     print("PART ONE:", final_pair.magnitude())
+
+    pairs = get_pairs()
+    max_magnitude = -1
+    for i in range(len(pairs)):
+        for j in range(i + 1, len(pairs)):
+            first, second = deepcopy(pairs[i]), deepcopy(pairs[j])
+            forwards = first.add(second)
+            forwards.reduce()
+
+            first, second = deepcopy(pairs[i]), deepcopy(pairs[j])
+            backwards = second.add(first)
+            backwards.reduce()
+
+            max_magnitude = max(max_magnitude, max(forwards.magnitude(), backwards.magnitude()))
+
+    print("PART TWO:", max_magnitude)
 
 
 if __name__ == "__main__":
