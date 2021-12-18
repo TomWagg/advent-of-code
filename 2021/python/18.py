@@ -3,6 +3,7 @@ from copy import deepcopy
 
 
 class Pear():
+    """ Yes I do mean Pear not Pair. It's a Pear tree. Aren't I hilarious? (: """
     def __init__(self, id, children=[], value=None, parent=None, depth=0):
         self.id = id
         self.children = children
@@ -10,28 +11,25 @@ class Pear():
         self.depth = depth
         self.value = value
 
-    def __str__(self):
-        if self.value is None:
-            return "<Pear: {}, Parent {}, has children>".format(self.id, self.parent.id
-                                                                if self.parent is not None else "None")
-        else:
-            return "<Pear: {}, Parent {}, Value {}>".format(self.id, self.parent.id
-                                                            if self.parent is not None else "None",
-                                                            self.value)
-
     def self_index(self):
+        """ Find the index of this pair in its parent child array """
         return self.parent.children.index(self)
 
     def get_adjacent(self, direction):
+        """ Get the adjacent value to either the left or right, return None if there are none """
         current = self
         limit = 0 if direction == "left" else len(current.parent.children) - 1
+
+        # search through parents until this pair isn't either the first or last child (depending on direction)
         while current.self_index() == limit:
             current = current.parent
+            # if you hit the root then give up
             if current.parent is None:
                 return None
 
             limit = 0 if direction == "left" else len(current.parent.children) - 1
 
+        # once you find the right start then drill down until you hit the closest thing
         sign = -1 if direction == "left" else 1
         index = -1 if direction == "left" else 0
         drill_here = current.parent.children[current.self_index() + sign]
@@ -41,6 +39,7 @@ class Pear():
         return drill_here
 
     def explode_tree(self):
+        # find every possible explosion in the tree
         if self.children is not None:
             if self.depth >= 4:
                 self.explode()
@@ -49,20 +48,25 @@ class Pear():
                     child.explode_tree()
 
     def split_tree(self):
+        # find every possible value to split in the tree
         if self.value is None:
             check = True
             for child in self.children:
                 check = child.split_tree()
+                # return immediately if something splits
                 if not check:
                     return check
             return check
         elif self.value > 9:
+            # split if the value is too large
             self.split()
             return False
         else:
             return True
 
     def reduce(self):
+        # loop over the tree exploding and splitting until done
+        # NOTE: this is very wasteful right now, could probably be smarter but it took too long
         done = False
         while not done:
             self.explode_tree()
@@ -74,6 +78,7 @@ class Pear():
         assert self.children[0].value is not None
         assert self.children[1].value is not None
 
+        # increase the value on the left and right
         left = self.get_adjacent("left")
         if left is not None:
             left.value += self.children[0].value
@@ -82,28 +87,34 @@ class Pear():
         if right is not None:
             right.value += self.children[1].value
 
+        # remove children and set the value to 0
         self.children = None
         self.value = 0
 
     def split(self):
+        # only split values not pairs
         assert self.value is not None
 
+        # remove value and add children
         left, right = floor(self.value / 2), ceil(self.value / 2)
         self.value = None
         self.children = []
         self.children.append(Pear(id=self.id, parent=self, children=None, value=left, depth=self.depth + 1))
         self.children.append(Pear(id=self.id, parent=self, children=None, value=right, depth=self.depth + 1))
 
+        # explode if necessary
         if self.depth >= 4:
             self.explode()
 
     def deepen(self):
+        # increase the depth of everything in the tree by 1
         self.depth += 1
         if self.children is not None:
             for child in self.children:
                 child.deepen()
 
     def add(self, pair):
+        """ add a pair to this one """
         new_base = Pear(id=-1, children=[self, pair], parent=None, value=None, depth=0)
 
         self.deepen()
@@ -114,19 +125,21 @@ class Pear():
         return new_base
 
     def magnitude(self):
+        """ calculate the magnitude of the tree """
         if self.children is None:
             return self.value
         else:
             return 3 * self.children[0].magnitude() + 2 * self.children[1].magnitude()
 
-    def recursive_print(self, end="\n", suffix=","):
+    def print(self, end="\n", suffix=","):
+        """ print out the tree just like the problem, highlight anything incorrect in red """
         if self.children is not None:
             if self.depth >= 4:
                 print("\033[91m[\033[0m", end="")
             else:
                 print("[", end="")
             for i, child in enumerate(self.children):
-                child.recursive_print(end="", suffix="" if i == len(self.children) - 1 else ",")
+                child.print(end="", suffix="" if i == len(self.children) - 1 else ",")
             suffix = "" if end == "\n" else suffix
             print("]" + suffix, end=end)
         else:
@@ -137,6 +150,7 @@ class Pear():
 
 
 def get_pairs():
+    """ Get the pairs from the file """
     pairs = []
     with open("../inputs/18.txt", "r") as input:
         for line in input:
