@@ -1,5 +1,4 @@
 from collections import defaultdict
-from copy import deepcopy
 
 
 def game_part_one(pos, win=1000):
@@ -24,17 +23,8 @@ def game_part_one(pos, win=1000):
                 return scores[1 - i] * cursor
 
 
-class Universe():
-    def __init__(self, pos, scores):
-        self.pos = pos
-        self.scores = scores
-
-    def __str__(self):
-        return "state: [{}, {}], [{}, {}]".format(self.pos[0], self.pos[1], self.scores[0], self.scores[1])
-
-
 def game_part_two(pos, win_value=21):
-    # work out the possible throw totals
+    # work out the possible throw totals for use later
     rolls = [1, 2, 3]
     totals = defaultdict(int)
     for roll1 in rolls:
@@ -42,38 +32,35 @@ def game_part_two(pos, win_value=21):
             for roll3 in rolls:
                 totals[sum([roll1, roll2, roll3])] += 1
 
-    # create the initial universes 
+    # create the initial universes, index using tuple of flattened positions and scores
     active_universes = defaultdict(int)
-    active_universes[Universe(pos, [0, 0])] = 1
+    active_universes[(*pos, 0, 0)] = 1
 
-    # initial conditions, start with player 1
+    # track universes that players have won, start with player 1
     wins, turn = [0, 0], 0
 
     # while there are still universes with unfinished games
     while list(active_universes.keys()) != []:
-        print(wins)
         updated_universes = defaultdict(int)
-        for state in active_universes:
+        for u in active_universes:
             for throw in totals:
-                new_state = deepcopy(state)
-                new_state.pos[turn] = (state.pos[turn] + throw) % 10
-                new_state.scores[turn] += (new_state.pos[turn] + 1)
+                pos, scores = [u[0], u[1]], [u[2], u[3]]
+                pos[turn] = (pos[turn] + throw) % 10
+                scores[turn] += (pos[turn] + 1)
 
                 # check if the player just won
-                if new_state.scores[turn] >= win_value:
-                    wins[turn] += active_universes[state] * totals[throw]
+                if scores[turn] >= win_value:
+                    wins[turn] += active_universes[u] * totals[throw]
                 else:
-                    updated_universes[new_state] += active_universes[state] * totals[throw]
+                    updated_universes[(*pos, *scores)] += active_universes[u] * totals[throw]
 
+        # update the current universes
         active_universes = updated_universes
-        # for state in playing_states:
-        #     print(state, playing_states[state])
-        # print()
-        # if turn == 1:
-        #     break
+
+        # change to other player's turn
         turn = 1 - turn
 
-    print(wins)
+    # return the number of wins for whichever player won more
     return max(wins)
 
 
@@ -94,7 +81,7 @@ def main():
             line = line.strip()
             pos.append(int(line.split(": ")[-1]) - 1)
 
-    print("PART TWO:", game_part_two(pos))
+    print(game_part_two(pos))
 
 
 if __name__ == "__main__":
