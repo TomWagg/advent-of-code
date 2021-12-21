@@ -81,7 +81,7 @@ def main():
             line = line.strip()
             pos.append(int(line.split(": ")[-1]) - 1)
 
-    print(game_part_two(pos))
+    print("PART TWO:", game_part_two(pos))
 
 
 if __name__ == "__main__":
