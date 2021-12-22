@@ -1,35 +1,58 @@
-import numpy as np
+from collections import Counter
 
 
-def range_inclusive(start, end):
-    """ same as range but including endpoint """
-    return range(start, end + 1)
+def find_cube_intersection(cube_a, cube_b):
+    intersect_bounds = []
+    for ax in range(3):
+        lower_bound = max(cube_a[2 * ax], cube_b[2 * ax])
+        upper_bound = min(cube_a[2 * ax + 1], cube_b[2 * ax + 1])
+        if lower_bound > upper_bound:
+            return None
+        intersect_bounds.extend([lower_bound, upper_bound])
+    return tuple(intersect_bounds)
 
 
-def bounds_to_cubeset(bounds):
-    """ turn 3D bounds into a set of tuples """
-    cubes = set()
-    too_big = bounds[0][0] < -50 or bounds[0][1] > 50 or bounds[1][0] < -50 \
-        or bounds[1][1] > 50 or bounds[2][0] < -50 or bounds[2][1] > 50
-    if too_big:
-        return cubes
+def reboot(operations, part_one=False):
+    # we can be more intelligent that just creating a set entry for every coordinate like I did before
+    # let's try to keep track of "positive" cuboids and "negative" cuboids instead
 
-    for x in range_inclusive(*bounds[0]):
-        for y in range_inclusive(*bounds[1]):
-            for z in range_inclusive(*bounds[2]):
-                cubes.add((x, y, z))
-    return cubes
+    # using a Counter instead of Set to account for repeats
+    cubes = Counter()
 
-
-def part_one(operations):
-    cubes = set()
+    # loop over every operation
     for switch, bounds in operations:
-        update_cubes = bounds_to_cubeset(bounds)
+        # if we are doing part one then ignore operations that don't intersect with the middle bit
+        if part_one and find_cube_intersection(bounds, (-50, 50, -50, 50, -50, 50)) is None:
+            continue
+
+        # start a new counter for any intersections between the new bounds and current cubes
+        intersected_cubes = Counter()
+        for cube in cubes:
+            # if this cube intersects with the new bounds
+            intersect = find_cube_intersection(cube, bounds)
+            if intersect is not None:
+                # add a "negative" cube to cancel out the intersection
+                intersected_cubes[intersect] -= cubes[cube]
+
+        # only when switches are on do we turn on the actual bounds
         if switch == "on":
-            cubes.update(update_cubes)
-        else:
-            cubes.difference_update(update_cubes)
-    return len(cubes)
+            cubes[bounds] = 1
+
+        # update the main cubes Counter
+        cubes.update(intersected_cubes)
+
+    # count how many cube pixels are lit
+    lit_cubes = 0
+    for cube in cubes:
+        # get the volume of the bounding cube
+        volume = 1
+        for ax in range(0, len(cube), 2):
+            volume *= cube[ax + 1] - cube[ax] + 1
+
+        # increment the total by the product of the volume and value of the bounding cuboid
+        lit_cubes += (volume * cubes[cube])
+
+    return lit_cubes
 
 
 def main():
@@ -40,10 +63,14 @@ def main():
             switch, str_bounds = line.split()
             str_bounds = str_bounds.split(",")
 
-            bounds = [list(map(int, axis.split("=")[-1].split(".."))) for axis in str_bounds]
+            bounds = []
+            for axis in str_bounds:
+                bounds.extend(list(map(int, axis.split("=")[-1].split(".."))))
+            bounds = tuple(bounds)
             operations.append((switch, bounds))
 
-    print("PART ONE:", part_one(operations))
+    print("PART ONE:", reboot(operations, part_one=True))
+    print("PART TWO:", reboot(operations))
 
 
 if __name__ == "__main__":
