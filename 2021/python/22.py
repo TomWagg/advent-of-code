@@ -70,7 +70,18 @@ def main():
             operations.append((switch, bounds))
 
     print("PART ONE:", reboot(operations, part_one=True))
-    print("PART TWO:", reboot(operations))
+
+    total_clever_switches = reboot(operations)
+    print("PART TWO:", total_clever_switches)
+
+    total_manual_switches = 0
+    for switch, cube in operations:
+        volume = 1
+        for ax in range(0, len(cube), 2):
+            volume *= cube[ax + 1] - cube[ax] + 1
+        total_manual_switches += volume
+    print("By doing this clever thing by finding overlaps in the instructions, we now only have to ", end="")
+    print("turn {:1.2f} of the original switches on!!".format(total_clever_switches / total_manual_switches))
 
 
 if __name__ == "__main__":
