@@ -1,3 +1,5 @@
+# I quite liked this one, fun puzzle
+
 def ALU(operations, variables={"w": 0, "x": 0, "y": 0, "z": 0}, input_queue=[]):
     """ ALU for testing purposes """
     for op in operations:
@@ -35,7 +37,7 @@ def reduced_ALU(model_number, constants):
     return z
 
 
-def find_model_number(constants, z_prev=0, model_number=()):
+def find_model_number(constants, z_prev=0, model_number=(), part_two=False):
     """ Recursively add to the model number until you find one that works and return it """
     # once there are no constants left
     if constants == []:
@@ -57,13 +59,14 @@ def find_model_number(constants, z_prev=0, model_number=()):
 
         # otherwise return the new values
         return find_model_number(constants=next_steps, z_prev=z_prev // this_step[0],
-                                 model_number=model_number + (w,))
+                                 model_number=model_number + (w,), part_two=part_two)
 
     # check every possible model number
-    for w in reversed(range(1, 10)):
+    w_range = range(1, 10) if part_two else reversed(range(1, 10))
+    for w in w_range:
         guessed_number = find_model_number(constants=next_steps,
                                            z_prev=reduced_function(z_prev, w, this_step),
-                                           model_number=model_number+(w,))
+                                           model_number=model_number+(w,), part_two=part_two)
         if guessed_number is not None:
             return guessed_number
 
@@ -85,6 +88,7 @@ def main():
 
     # find the largest model number
     print("PART ONE:", "".join(list(map(str, find_model_number(constants)))))
+    print("PART TWO:", "".join(list(map(str, find_model_number(constants, part_two=True)))))
 
 
 if __name__ == "__main__":
