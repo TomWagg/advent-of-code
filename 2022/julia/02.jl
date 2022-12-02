@@ -1,18 +1,6 @@
 using DelimitedFiles
 
-function shape_to_score(shape)
-    if shape == 'X'
-        return 1
-    elseif shape == 'Y'
-        return 2
-    elseif shape == 'Z'
-        return 3
-    else
-        return nothing
-    end;
-end;
-
-function part_one(file)
+function part_one_vector(file)
     # read the file into a matrix of Chars and convert to Ints
     file_content = Int.(readdlm(file, ' ', Char, '\n'))
 
@@ -34,6 +22,54 @@ function part_one(file)
 
     # return the total score from the outcome and what you play
     return sum(outcome_score) + sum(file_content[:, 2])
+end;
+
+function part_two_vector(file)
+    # read the file into a matrix of Chars and convert to Ints
+    file_content = Int.(readdlm(file, ' ', Char, '\n'))
+
+    # normalise both to 1,2,3
+    file_content[:, 1] .-= 64
+    file_content[:, 2] .-= 87
+
+    # work out what you would play to get the desired outcome
+    yous = Array{Int64}(undef, length(file_content[:, 1]))
+    yous[file_content[:, 2] .== 1] .= (file_content[:, 1][file_content[:, 2] .== 1] .- 1)
+    yous[file_content[:, 2] .== 2] .= file_content[:, 1][file_content[:, 2] .== 2]
+    yous[file_content[:, 2] .== 3] .= (file_content[:, 1][file_content[:, 2] .== 3] .+ 1)
+    yous[yous .< 1] .= 3
+    yous[yous .> 3] .= 1
+
+    outcome_score = zeros(Int64, length(yous))
+    outcome_score[file_content[:, 2] .== 2] .= 3
+    outcome_score[file_content[:, 2] .== 3] .= 6
+
+    # return the total score from the outcome and what you play
+    return sum(outcome_score) + sum(yous)
+end;
+
+function part_one(file)
+    total_score = 0
+    open(file, "r") do input
+        for line in eachline(input)
+            opponent, you = split(line)
+            opponent, you = opponent[1], you[1]
+            total_score += Int(you) - Int('X') + 1
+
+            opponent = Char(Int(opponent) - 65 + 88)
+
+            you_beats = Char(Int(you) - 1)
+            if you_beats < 'X'
+                you_beats = 'Z'
+            end;
+            if opponent == you
+                total_score += 3
+            elseif opponent == you_beats
+                total_score += 6
+            end;            
+        end;
+    end;
+    return total_score
 end;
 
 function part_two(file)
@@ -62,7 +98,7 @@ function part_two(file)
             if you > 'Z'
                 you = 'X'
             end;
-            total_score += shape_to_score(you)     
+            total_score += Int(you) - Int('X') + 1
         end;
     end;
     return total_score
@@ -72,6 +108,9 @@ function main()
     # open up the input file
     println("PART ONE: ", part_one("../inputs/2.txt"))
     println("PART TWO: ", part_two("../inputs/2.txt"))
+
+    println("PART ONE: ", part_one_vector("../inputs/2.txt"))
+    println("PART TWO: ", part_two_vector("../inputs/2.txt"))
 end;
 
 main()
