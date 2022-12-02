@@ -1,3 +1,5 @@
+using DelimitedFiles
+
 function shape_to_score(shape)
     if shape == 'X'
         return 1
@@ -11,31 +13,27 @@ function shape_to_score(shape)
 end;
 
 function part_one(file)
-    total_score = 0
-    open(file, "r") do input
-        for line in eachline(input)
-            opponent, you = split(line)
-            opponent, you = opponent[1], you[1]
-            total_score += shape_to_score(you)
+    # read the file into a matrix of Chars and convert to Ints
+    file_content = Int.(readdlm(file, ' ', Char, '\n'))
 
-            opponent = Char(Int(opponent) - 65 + 88)
+    # normalise both to 1,2,3
+    file_content[:, 1] .-= 64
+    file_content[:, 2] .-= 87
 
-            you_beats = Char(Int(you) - 1)
-            if you_beats < 'X'
-                you_beats = 'Z'
-            end;
-            if opponent == you
-                total_score += 3
-                # println(you, " ", opponent, " DRAW")
-            elseif opponent == you_beats
-                # println(you, " ", opponent, " WIN")
-                total_score += 6
-            else
-                # println(you, " ", opponent, " LOSS")
-            end;            
-        end;
-    end;
-    return total_score
+    # find difference between the two
+    difference = file_content[:, 1] .- file_content[:, 2]
+
+    # check the outcome in each case, by default a loss
+    outcome_score = zeros(Int64, length(difference))
+
+    # if they are the same then add 3 to the score
+    outcome_score[difference .== 0] .= 3
+
+    # if it's a win (2 is same as -1 because wrap around) then give 6
+    outcome_score[difference .== -1 .|| difference .== 2] .= 6
+
+    # return the total score from the outcome and what you play
+    return sum(outcome_score) + sum(file_content[:, 2])
 end;
 
 function part_two(file)
