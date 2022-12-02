@@ -3,7 +3,7 @@ function main()
     elves = open("../inputs/1.txt", "r") do input
         # create an elf array and append a list of calories for each elf
         elves = []
-        calories = []
+        calories = Array{Int64}(undef, 0)
         for line in eachline(input)
             if line == ""
                 push!(elves, calories)
