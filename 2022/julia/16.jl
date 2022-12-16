@@ -1,4 +1,4 @@
-using Combinatorics, DataStructures, BenchmarkTools
+using Combinatorics, DataStructures
 
 mutable struct ValveGraph
     v::Array{Int8}  # list of vertices
@@ -187,13 +187,12 @@ function part_two(g::ValveGraph, start_ind::Int8)
             if pressure > maximum_pressure
                 maximum_pressure = pressure
                 best_opened = opened
-                @show time_left
             end
             continue
         end
 
         # SHORTCUT! Magic numbers here, but if this state is looking "bad" then drop it
-        if time_left < 24 && pressure < maximum_pressure ÷ 2
+        if time_left < 22 && pressure < maximum_pressure ÷ 2
             continue
         end
 
