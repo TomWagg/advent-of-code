@@ -120,6 +120,11 @@ function part_one(g::ValveGraph, start_ind::Int8)
             state_tracker[(time_left, location, visited)] = pressure
         end
 
+        # SHORTCUT! Magic numbers here, but if this state is looking bad then drop it
+        if time_left < 22 && pressure < maximum_pressure ÷ 2
+            continue
+        end
+
         # if this state has run out of time then (potentially) update the maximum pressure and move on
         if time_left < 0
             maximum_pressure = max(maximum_pressure, pressure)
@@ -145,57 +150,58 @@ function part_one(g::ValveGraph, start_ind::Int8)
 end
 
 function part_two(g::ValveGraph, start_ind::Int8)
+    """Now this performs an interactive cached search of the graph, searching for best order in which to open
+    valves when you've got two people/elephants moving and pre-calculates how much pressure to release
+    
+    The trick now is to run a clock for both you and the elephant to enable jumps"""
+
+    # start off an initial visited bool array
     initial_visited = falses(length(g.v))
     initial_visited[start_ind] = true
 
-    volcano_states = [(26, start_ind, start_ind, 0, copy(initial_visited))]
-    state_tracker = DefaultDict(-1)
+    # start a queue of volcano states
+    volcano_states = [(26, start_ind, start_ind, 0, 0, 0, initial_visited)]
 
+    # keep a tracker on the pressure released by each state (this is the cache)
+    state_tracker = DefaultDict(-1)
     maximum_pressure = 0
 
+    # iterate over the queue
     while length(volcano_states) > 0
-        time_left, location, elephant, pressure, visited = pop!(volcano_states)
-        
-        if state_tracker[(time_left, location, elephant, visited)] >= pressure
-            continue
-        end
-        state_tracker[(time_left, location, elephant, visited)] = pressure
+        # pop off the top of the queue
+        time_left, you, elephant, you_wait, elephant_wait, pressure, visited = pop!(volcano_states)
 
-        if time_left < 0 || all(visited .== true)
+        # if we've been here before and it wasn't as good then skip it
+        if state_tracker[(time_left, you, elephant, visited)] >= pressure
+            continue
+        # otherwise update the state tracker with this pressure
+        else
+            state_tracker[(time_left, you, elephant, visited)] = pressure
+        end
+
+        # if this state has run out of time then (potentially) update the maximum pressure and move on
+        if time_left < 0
             maximum_pressure = max(maximum_pressure, pressure)
             continue
         end
 
-        if !visited[location]
-            visited[location] = true
-            push!(volcano_states, (time_left - 1, location,
+        # first option: open the valve!
+        if !visited[you]
+            new_visited = copy(visited)
+            new_visited[you] = true
+            push!(volcano_states, (time_left - 1, you,
                                    pressure + ((time_left - 1) * g.flow_rate[location]),
-                                   copy(visited)))
-
-            if !visited[elephant]
-                visited[elephant] = true
-                push!(volcano_states, (time_left - 1, location, elephant,
-                                       pressure + ((time_left - 1) * g.flow_rate[location]) + ((time_left - 1) * g.flow_rate[elephant]),
-                                       copy(visited)))
-                visited[location] = false
-            end
-
-            for connection in collect(g.e[location])
-                push!(volcano_states, (time_left - g.dist[location, connection], connection,
-                                       pressure + ((time_left - 1) * g.flow_rate[location]), copy(visited)))
-            end
-
-            visited[location] = false
+                                   new_visited))
         end
 
-        for connection in collect(g.e[location])
-            push!(volcano_states, (time_left - g.dist[location, connection], connection,
-                                   pressure, copy(visited)))
+        # otherwise, try moving to each valve in the vicinity (adjust time by distance)
+        for connection in collect(g.e[you])
+            push!(volcano_states, (time_left - g.dist[you, connection], connection,
+                                   pressure, visited))
         end
     end
     return maximum_pressure
 end
-
 
 function main()
     g, start_ind = construct_graph()
