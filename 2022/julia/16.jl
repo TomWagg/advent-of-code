@@ -1,14 +1,14 @@
-using Combinatorics, Memoize, DataStructures
+using Combinatorics, DataStructures, BenchmarkTools
 
 mutable struct ValveGraph
-    v::Array{Int64}  # list of vertices
+    v::Array{Int8}  # list of vertices
     e  # list of vertices for each vertex implying an edge
-    dist::Matrix{Int64}  # distance along each edge
-    flow_rate::Array{Int64} # flow rate for each vertex
-    # visited::Array{Bool}  # whether this valve has been visited
+    dist::Matrix{Int8}  # distance along each edge
+    flow_rate::Array{Int8} # flow rate for each vertex
 end
 
 function construct_graph()
+    # first loop through and convert labels into integers
     label_to_ind = Dict()
     open("../inputs/16.txt", "r") do input
         i = 1
@@ -18,8 +18,9 @@ function construct_graph()
         end
     end
 
+    # next create a large graph with every valve and tunnel connection
     n = length(label_to_ind)
-    g = ValveGraph(range(1, n), [Set() for i in 1:n], zeros(Int64, n, n), zeros(Int64, n))
+    g = ValveGraph(range(1, n), [Set{Int8}() for i in 1:n], zeros(Int8, n, n), zeros(Int8, n))
     open("../inputs/16.txt", "r") do input
         i = 1
         for line in eachline(input)
@@ -33,6 +34,7 @@ function construct_graph()
         end
     end
 
+    # now we can reduce this graph by deleting 
     delete_these = []
     for i in 1:n
         if g.flow_rate[i] == 0 && label_to_ind["AA"] !== i
@@ -55,49 +57,56 @@ function construct_graph()
         end
     end
 
-    deleteat!(g.v, delete_these)
-    return label_to_ind, g
+    n = sum(g.flow_rate .> 0) + 1
+
+    start_ind = label_to_ind["AA"]
+    convertor = Dict(start_ind=>1)
+
+    old_inds = findall(x->x>0, g.flow_rate)
+    for i in 2:n
+        convertor[old_inds[i - 1]] = i
+    end
+
+    small_g = ValveGraph(range(1, n), [Set{Int8}() for i in 1:n], zeros(Int8, n, n), zeros(Int8, n))
+    new_start_ind = Int8(-1)
+
+    i = Int8(1)
+    for v in g.v
+        if g.flow_rate[v] > 0 || v == start_ind
+            small_g.flow_rate[i] = g.flow_rate[v]
+            small_g.e[i] = Set([convertor[x] for x in g.e[v]])
+            for e in g.e[v]
+                small_g.dist[i, convertor[e]] = g.dist[v, e]
+            end
+
+            if v == start_ind
+                new_start_ind = i
+            end
+            i += 1
+        end
+    end
+
+    return small_g, new_start_ind
 end
 
+function part_one(g::ValveGraph, start_ind::Int8)
+    initial_visited = falses(length(g.v))
+    initial_visited[start_ind] = true
 
-@memoize function timed_dfs(g, valve, time_left, visited)
-    if time_left <= 0
-        return 0
-    end
-
-    pressure_released = 0
-    for connection in collect(g.e[valve])
-        @show connection
-        pressure_released = max(pressure_released, timed_dfs(g, connection,
-                                                             time_left - g.dist[valve, connection],
-                                                             visited))
-    end
-    if !visited[valve]
-        visited[valve] = true
-        pressure_released = max(pressure_released, timed_dfs(g, valve, time_left - 1, visited) + g.flow_rate[valve] * (time_left - 1))
-    end
-    return pressure_released
-end
-
-function iterative_timed_dfs(g, label_to_ind)
-    initial_visited = falses(length(label_to_ind))
-    initial_visited[label_to_ind["AA"]] = true
-
-    volcano_states = [(30, label_to_ind["AA"], 0, copy(initial_visited))]
+    volcano_states = [(30, start_ind, 0, copy(initial_visited))]
     state_tracker = DefaultDict(-1)
 
     maximum_pressure = 0
 
     while length(volcano_states) > 0
         time_left, location, pressure, visited = pop!(volcano_states)
-        # @show time_left, location, pressure, visited
         
-        if state_tracker[(time_left, location)] >= pressure
+        if state_tracker[(time_left, location, visited)] >= pressure
             continue
         end
-        state_tracker[(time_left, location)] = pressure
+        state_tracker[(time_left, location, visited)] = pressure
 
-        if time_left < 0
+        if time_left < 0 || all(visited .== true)
             maximum_pressure = max(maximum_pressure, pressure)
             continue
         end
@@ -111,7 +120,58 @@ function iterative_timed_dfs(g, label_to_ind)
         end
 
         for connection in collect(g.e[location])
-            # @show g.dist[location, connection]
+            push!(volcano_states, (time_left - g.dist[location, connection], connection,
+                                   pressure, copy(visited)))
+        end
+    end
+    return maximum_pressure
+end
+
+function part_two(g::ValveGraph, start_ind::Int8)
+    initial_visited = falses(length(g.v))
+    initial_visited[start_ind] = true
+
+    volcano_states = [(26, start_ind, start_ind, 0, copy(initial_visited))]
+    state_tracker = DefaultDict(-1)
+
+    maximum_pressure = 0
+
+    while length(volcano_states) > 0
+        time_left, location, elephant, pressure, visited = pop!(volcano_states)
+        
+        if state_tracker[(time_left, location, elephant, visited)] >= pressure
+            continue
+        end
+        state_tracker[(time_left, location, elephant, visited)] = pressure
+
+        if time_left < 0 || all(visited .== true)
+            maximum_pressure = max(maximum_pressure, pressure)
+            continue
+        end
+
+        if !visited[location]
+            visited[location] = true
+            push!(volcano_states, (time_left - 1, location,
+                                   pressure + ((time_left - 1) * g.flow_rate[location]),
+                                   copy(visited)))
+
+            if !visited[elephant]
+                visited[elephant] = true
+                push!(volcano_states, (time_left - 1, location, elephant,
+                                       pressure + ((time_left - 1) * g.flow_rate[location]) + ((time_left - 1) * g.flow_rate[elephant]),
+                                       copy(visited)))
+                visited[location] = false
+            end
+
+            for connection in collect(g.e[location])
+                push!(volcano_states, (time_left - g.dist[location, connection], connection,
+                                       pressure + ((time_left - 1) * g.flow_rate[location]), copy(visited)))
+            end
+
+            visited[location] = false
+        end
+
+        for connection in collect(g.e[location])
             push!(volcano_states, (time_left - g.dist[location, connection], connection,
                                    pressure, copy(visited)))
         end
@@ -120,18 +180,10 @@ function iterative_timed_dfs(g, label_to_ind)
 end
 
 
-function part_one()
-    label_to_ind, g = construct_graph()
-    @show label_to_ind, g
-    return iterative_timed_dfs(g, label_to_ind)
-
-    return nothing
+function main()
+    g, start_ind = construct_graph()
+    println("PART ONE: ", part_one(g, Int8(start_ind)))
+    println("PART TWO: ", part_two(g, Int8(start_ind)))
 end
 
-function part_two()
-    return nothing
-end
-
-println("PART ONE: ", part_one())
-@time part_one()
-# println("PART TWO: ", part_two())
+main()
