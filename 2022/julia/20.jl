@@ -13,15 +13,7 @@ function get_numbers()
     return numbers
 end
 
-function part_one()
-    numbers = get_numbers()
-    max_ind = length(numbers)
-    inds = collect(1:max_ind)
-
-    # create a mixing bowl that connects numbers and their initial indices
-    mixing_bowl = [(ind, numbers[ind]) for ind in inds]
-    zero_ind = 0
-
+function stir_the_bowl(mixing_bowl::Array{Tuple{Int64, Int64}}, max_ind::Int64)
     # loop over the numbers to move
     for i in 1:max_ind
         # search for the number in the current mixing bowl
@@ -33,8 +25,7 @@ function part_one()
                 _, num = mixing_bowl[j]
                 deleteat!(mixing_bowl, j)
 
-                # work out where it should be inserted
-                # (max_ind - 1) because we've already removed num
+                # work out where it should be inserted, (max_ind - 1) since already removed num
                 new_index = adj_mod(j + num, max_ind - 1)
 
                 # if it's negative then offset it from the end of the bowl
@@ -48,8 +39,23 @@ function part_one()
             end
         end
     end
+    return mixing_bowl
+end
+
+function mix_numbers(decryption_key::Int64, n_mix::Int64)
+    numbers = get_numbers()
+    max_ind = length(numbers)
+
+    # create a mixing bowl that connects (numbers * the key) and their initial indices
+    mixing_bowl = [(ind, numbers[ind] * decryption_key) for ind in 1:max_ind]
+
+    # stir the bowl around the inputted number of times
+    for _ in 1:n_mix
+        mixing_bowl = stir_the_bowl(mixing_bowl, max_ind)
+    end
 
     # search for where the zero ended up
+    zero_ind = 0
     for i in eachindex(mixing_bowl)
         if mixing_bowl[i][2] == 0
             zero_ind = i
@@ -66,8 +72,12 @@ function part_one()
     return answer
 end
 
+function part_one()
+    return mix_numbers(1, 1)
+end
+
 function part_two()
-    return nothing
+    return mix_numbers(811589153, 10)
 end
 
 println("PART ONE: ", part_one())
