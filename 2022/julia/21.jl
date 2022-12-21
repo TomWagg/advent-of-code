@@ -1,29 +1,27 @@
-using BenchmarkTools
+mutable struct Monkey
+    waiting_for::Array{String}      # which monkeys this one is waiting for
+    shout::Int64                    # what this monkey will shout
+    operation::String               # what operation this monkey does to those it waits for
+end
 
 function wrangle_monkeys()
-    """Wrangle monkeys out of a file and into some data structures"""
-    # dictionary connecting monkeys to monkeys that are dependent on
-    waiting_room = Dict{String, Array{String}}()
-    # dictionarys relating a monkey to what it will shout and what operation it performs
-    shouting = Dict{String, Int64}()
-    operations = Dict{String, String}()
+    """Wrangle monkeys out of a file and into a dictionary with the data"""
+    monkeys = Dict{String, Monkey}()
     open("../inputs/21.txt", "r") do input
         for line in eachline(input)
             name, action = split(line, ": ")
             if length(action) == 11
                 waiters = split(action, " ")
-                waiting_room[name] = [waiters[1], waiters[3]]
-                operations[name] = waiters[2]
+                monkeys[name] = Monkey([waiters[1], waiters[3]], 0, waiters[2])
             else
-                waiting_room[name] = []
-                shouting[name] = parse(Int, action)
+                monkeys[name] = Monkey([], parse(Int, action), "")
             end
         end
     end
-    return waiting_room, shouting, operations
+    return monkeys
 end
 
-function say_what(monkey, waiting_room, shouting, operations, ignore_humn)
+function say_what(monkey, monkeys, ignore_humn)
     """Monkey says what? (Work out what a monkey will shout)"""
     # if the monkey is the special one that we replace then return nothing (only on part 2)
     if monkey == "humn" && ignore_humn
@@ -31,13 +29,13 @@ function say_what(monkey, waiting_room, shouting, operations, ignore_humn)
     end
 
     # if the monkey isn't waiting on anyone then just shout away my friend
-    if length(waiting_room[monkey]) == 0
-        return shouting[monkey]
+    if length(monkeys[monkey].waiting_for) == 0
+        return monkeys[monkey].shout
     end
 
     # work out what the two monkeys that this one is waiting for will shout
-    first_waiter = say_what(waiting_room[monkey][1], waiting_room, shouting, operations, ignore_humn)
-    second_waiter = say_what(waiting_room[monkey][2], waiting_room, shouting, operations, ignore_humn)
+    first_waiter = say_what(monkeys[monkey].waiting_for[1], monkeys, ignore_humn)
+    second_waiter = say_what(monkeys[monkey].waiting_for[2], monkeys, ignore_humn)
 
     # if either returns nothing then you don't what to shout and just return nothing
     if ignore_humn && (first_waiter === nothing || second_waiter === nothing)
@@ -46,68 +44,73 @@ function say_what(monkey, waiting_room, shouting, operations, ignore_humn)
 
     # otherwise calculate your shout value based on the operation
     shout = 0
-    if operations[monkey] == "+"
+    if monkeys[monkey].operation == "+"
         shout = first_waiter + second_waiter
-    elseif operations[monkey] == "-"
+    elseif monkeys[monkey].operation == "-"
         shout = first_waiter - second_waiter
-    elseif operations[monkey] == "*"
+    elseif monkeys[monkey].operation == "*"
         shout = first_waiter * second_waiter
-    elseif operations[monkey] == "/"
+    elseif monkeys[monkey].operation == "/"
         shout = first_waiter ÷ second_waiter
     end
 
-    # update the shout value and erase the waiting room
-    shouting[monkey] = shout
-    waiting_room[monkey] = []
+    # update the shout value and erase the waiting room to speed up the next time
+    monkeys[monkey].shout = shout
+    monkeys[monkey].waiting_for = []
 
     return shout
 end
 
 function part_one()
     # just work out what the root will shout
-    waiting_room, shouting, operations = wrangle_monkeys()
-    return say_what("root", waiting_room, shouting, operations, false)
+    monkeys = wrangle_monkeys()
+    return say_what("root", monkeys, false)
 end
 
 function part_two()
-    waiting_room, shouting, operations = wrangle_monkeys()
+    monkeys = wrangle_monkeys()
 
-    targets = [say_what(waiting_room["root"][i], waiting_room, shouting, operations, true) for i in 1:2]
+    # check the two potential targets
+    targets = [say_what(monkeys["root"].waiting_for[i], monkeys, true) for i in 1:2]
+
+    # whichever is the fixed value, work out what you need to shout to make the other match it
     if targets[1] === nothing
-        return what_do_i_shout(waiting_room["root"][1], targets[2], waiting_room, shouting, operations)
+        return what_do_i_shout(monkeys["root"].waiting_for[1], targets[2], monkeys)
     else
-        return what_do_i_shout(waiting_room["root"][2], targets[1], waiting_room, shouting, operations)
+        return what_do_i_shout(monkeys["root"].waiting_for[2], targets[1], monkeys)
     end
 end
 
-function what_do_i_shout(monkey, target, waiting_room, shouting, operations)
+function what_do_i_shout(monkey, target, monkeys)
+    """Work out what a monkey needs to should to produce a target value"""
+    # base case, if we hit "humn" then that's our solution
     if monkey == "humn"
         return target
     end
-    branches = [say_what(waiting_room[monkey][i], waiting_room, shouting, operations, true) for i in 1:2]
 
-    value = -1
-    next = -1
+    # work out what the monkey on either side shouts
+    branches = [say_what(monkeys[monkey].waiting_for[i], monkeys, true) for i in 1:2]
+
+    # check which has a fixed value and which we need to look at next
+    value, next = 1, 2
     if branches[1] === nothing
         value = 2
         next = 1
-    else
-        value = 1
-        next = 2
     end
 
+    # work out the next target value based on the old target, fixed value and operation
     new_target = 0
-    if operations[monkey] == "+"
+    if monkeys[monkey].operation == "+"
         new_target = target - branches[value]
-    elseif operations[monkey] == "-"
+    elseif monkeys[monkey].operation == "-"
         if value == 2
             new_target = target + branches[value]
         else
             new_target = branches[value] - target
         end
-    elseif operations[monkey] == "*"
+    elseif monkeys[monkey].operation == "*"
         new_target = target ÷ branches[value]
-    elseif operations[monkey] == "/"
+    elseif monkeys[monkey].operation == "/"
         if value == 2
             new_target = target * branches[value]
         else
@@ -115,11 +118,9 @@ function what_do_i_shout(monkey, target, waiting_room, shouting, operations)
         end
     end
 
-    return what_do_i_shout(waiting_room[monkey][next], new_target, waiting_room, shouting, operations)
+    # drill down to the next monkey that we're uncertain of
+    return what_do_i_shout(monkeys[monkey].waiting_for[next], new_target, monkeys)
 end
 
 println("PART ONE: ", part_one())
 println("PART TWO: ", part_two())
-
-@btime part_one()
-@btime part_two()
