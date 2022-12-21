@@ -1,77 +1,10 @@
-using DataStructures, InverseFunctions
-
-function say_what(monkey, waiting_room, shouting, operations)
-
-    if monkey == "humn"
-        return nothing
-    end
-
-    # base condition
-    if length(waiting_room[monkey]) == 0
-        return shouting[monkey]
-    end
-
-    first_waiter = say_what(waiting_room[monkey][1], waiting_room, shouting, operations)
-    second_waiter = say_what(waiting_room[monkey][2], waiting_room, shouting, operations)
-
-    if first_waiter === nothing || second_waiter === nothing
-        return nothing
-    end
-
-    shout = 0
-    if operations[monkey] == "+"
-        shout = first_waiter + second_waiter
-    elseif operations[monkey] == "-"
-        shout = first_waiter - second_waiter
-    elseif operations[monkey] == "*"
-        shout = first_waiter * second_waiter
-    elseif operations[monkey] == "/"
-        shout = first_waiter ÷ second_waiter
-    end
-    shouting[monkey] = shout
-    waiting_room[monkey] = []
-
-    return shout
-end
-
-function aggregate_operations(monkey, waiting_room, shouting, operations)
-    # base condition
-    if monkey == "humn"
-        return monkey
-    end
-    if length(waiting_room[monkey]) == 0
-        return string(shouting[monkey])
-    end
-
-    first_waiter = aggregate_operations(waiting_room[monkey][1], waiting_room, shouting, operations)
-    second_waiter = aggregate_operations(waiting_room[monkey][2], waiting_room, shouting, operations)
-
-    if occursin("humn", first_waiter) || occursin("humn", second_waiter)
-        op_string = "(" * first_waiter * " " * operations[monkey] * " " * second_waiter * ")"
-    else
-        shout = 0
-        first_waiter = parse(Int, first_waiter)
-        second_waiter = parse(Int, second_waiter)
-        if operations[monkey] == "+"
-            shout = first_waiter + second_waiter
-        elseif operations[monkey] == "-"
-            shout = first_waiter - second_waiter
-        elseif operations[monkey] == "*"
-            shout = first_waiter * second_waiter
-        elseif operations[monkey] == "/"
-            shout = first_waiter ÷ second_waiter
-        end
-        shouting[monkey] = shout
-        op_string = string(shout)
-    end
-    waiting_room[monkey] = []
-
-    return op_string
-end
-
+using BenchmarkTools
 
 function wrangle_monkeys()
+    """Wrangle monkeys out of a file and into some data structures"""
+    # dictionary connecting monkeys to monkeys that are dependent on
     waiting_room = Dict{String, Array{String}}()
+    # dictionarys relating a monkey to what it will shout and what operation it performs
     shouting = Dict{String, Int64}()
     operations = Dict{String, String}()
     open("../inputs/21.txt", "r") do input
@@ -90,32 +23,68 @@ function wrangle_monkeys()
     return waiting_room, shouting, operations
 end
 
+function say_what(monkey, waiting_room, shouting, operations, ignore_humn)
+    """Monkey says what? (Work out what a monkey will shout)"""
+    # if the monkey is the special one that we replace then return nothing (only on part 2)
+    if monkey == "humn" && ignore_humn
+        return nothing
+    end
+
+    # if the monkey isn't waiting on anyone then just shout away my friend
+    if length(waiting_room[monkey]) == 0
+        return shouting[monkey]
+    end
+
+    # work out what the two monkeys that this one is waiting for will shout
+    first_waiter = say_what(waiting_room[monkey][1], waiting_room, shouting, operations, ignore_humn)
+    second_waiter = say_what(waiting_room[monkey][2], waiting_room, shouting, operations, ignore_humn)
+
+    # if either returns nothing then you don't what to shout and just return nothing
+    if ignore_humn && (first_waiter === nothing || second_waiter === nothing)
+        return nothing
+    end
+
+    # otherwise calculate your shout value based on the operation
+    shout = 0
+    if operations[monkey] == "+"
+        shout = first_waiter + second_waiter
+    elseif operations[monkey] == "-"
+        shout = first_waiter - second_waiter
+    elseif operations[monkey] == "*"
+        shout = first_waiter * second_waiter
+    elseif operations[monkey] == "/"
+        shout = first_waiter ÷ second_waiter
+    end
+
+    # update the shout value and erase the waiting room
+    shouting[monkey] = shout
+    waiting_room[monkey] = []
+
+    return shout
+end
+
 function part_one()
+    # just work out what the root will shout
     waiting_room, shouting, operations = wrangle_monkeys()
-    return say_what("root", waiting_room, shouting, operations)
+    return say_what("root", waiting_room, shouting, operations, false)
 end
 
 function part_two()
     waiting_room, shouting, operations = wrangle_monkeys()
 
-    # @show aggregate_operations(waiting_room["root"][1], waiting_room, shouting, operations)
-
-    target = say_what(waiting_room["root"][1], waiting_room, shouting, operations)
-    if target === nothing
-        target = say_what(waiting_room["root"][2], waiting_room, shouting, operations)
-        return solve_it(waiting_room["root"][1], target, waiting_room, shouting, operations)
+    targets = [say_what(waiting_room["root"][i], waiting_room, shouting, operations, true) for i in 1:2]
+    if targets[1] === nothing
+        return what_do_i_shout(waiting_room["root"][1], targets[2], waiting_room, shouting, operations)
     else
-        return solve_it(waiting_room["root"][2], target, waiting_room, shouting, operations)
+        return what_do_i_shout(waiting_room["root"][2], targets[1], waiting_room, shouting, operations)
     end
-
-    return nothing
 end
 
-function solve_it(monkey, target, waiting_room, shouting, operations)
+function what_do_i_shout(monkey, target, waiting_room, shouting, operations)
     if monkey == "humn"
         return target
     end
-    branches = [say_what(waiting_room[monkey][i], waiting_room, shouting, operations) for i in 1:2]
+    branches = [say_what(waiting_room[monkey][i], waiting_room, shouting, operations, true) for i in 1:2]
 
     value = -1
     next = -1
@@ -146,14 +115,11 @@ function solve_it(monkey, target, waiting_room, shouting, operations)
         end
     end
 
-    return solve_it(waiting_room[monkey][next], new_target, waiting_room, shouting, operations)
+    return what_do_i_shout(waiting_room[monkey][next], new_target, waiting_room, shouting, operations)
 end
 
-function test(humn)
-    return ((((92540050790154 - (9 * (((((280 + (((((((2 * (264 + ((516 + (((660 + (2 * ((2 * (530 + ((((313 + (((((3 * (615 + (((8 * (915 + ((((246 + (4 * (((483 + (((((((80 + (((((8 * ((((3 * (789 + ((107 + ((humn - 745) ÷ 3)) * 11))) - 695) ÷ 4) - 486)) + 570) ÷ 5) - 757) ÷ 3)) * 5) + 411) * 2) - 885) + 552) + 802)) ÷ 2) - 686))) ÷ 5) - 175) ÷ 3))) - 66) ÷ 2))) - 319) * 2) + 133) + 570)) ÷ 2) - 955) ÷ 2))) - 768))) ÷ 3) - 223)) ÷ 5))) - 933) ÷ 5) + 765) * 9) - 193) * 2)) ÷ 2) + 689) ÷ 6) - 230))) * 2) + 138) ÷ 12)
-end
-
-@show test(3453748220116)
-
-# println("PART ONE: ", part_one())
+println("PART ONE: ", part_one())
 println("PART TWO: ", part_two())
+
+@btime part_one()
+@btime part_two()
