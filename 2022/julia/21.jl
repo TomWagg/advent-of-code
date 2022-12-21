@@ -21,7 +21,7 @@ function wrangle_monkeys()
     return monkeys
 end
 
-function say_what(monkey, monkeys, ignore_humn)
+function say_what(monkey::String, monkeys::Dict{String, Monkey}, ignore_humn::Bool)
     """Monkey says what? (Work out what a monkey will shout)"""
     # if the monkey is the special one that we replace then return nothing (only on part 2)
     if monkey == "humn" && ignore_humn
@@ -81,7 +81,7 @@ function part_two()
     end
 end
 
-function what_do_i_shout(monkey, target, monkeys)
+function what_do_i_shout(monkey::String, target::Int64, monkeys::Dict{String, Monkey})
     """Work out what a monkey needs to should to produce a target value"""
     # base case, if we hit "humn" then that's our solution
     if monkey == "humn"
