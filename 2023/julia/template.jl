@@ -1,4 +1,5 @@
-using DelimitedFiles
+# using DelimitedFiles
+# using BenchmarkTools
 
 function get_input()
     open("../inputs/.txt", "r") do input
@@ -9,18 +10,18 @@ function get_input()
 end
 
 function part_one()
+    nothing = get_input()
     return nothing
 end
 
 function part_two()
+    nothing = get_input()
     return nothing
 end
 
 function main()
-    nothing = get_input()
-    part_one()
-    part_two()
+    println("PART ONE: ", part_one())
+    @time part_one()
+    println("PART TWO: ", part_two())
+    @time part_two()
 end
-
-println("PART ONE: ", part_one())
-println("PART TWO: ", part_two())
