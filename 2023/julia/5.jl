@@ -1,7 +1,9 @@
+using BenchmarkTools
+
 function get_input()
     seeds = Array{Int}(undef, 0)
-    maps = []
-    new_map = []
+    maps = Array{Array{Array{Int}}}(undef, 0)
+    new_map = Array{Array{Int}}(undef, 0)
     open("../inputs/5.txt", "r") do input
         for line in eachline(input)
             split_line = split(line, ":")
@@ -25,7 +27,8 @@ function get_input()
     return seeds, maps
 end
 
-function part_one(seeds, maps)
+function part_one()
+    seeds, maps = get_input()
     soils = zeros(Int, length(seeds))
     for (i, seed) in enumerate(seeds)
         for map in maps
@@ -41,7 +44,8 @@ function part_one(seeds, maps)
     return minimum(soils)
 end
 
-function part_two(seeds, maps)
+function part_two()
+    seeds, maps = get_input()
     # convert seeds into seed ranges
     seed_ranges = Array{Array{Int}}(undef, 0)
     for i in 1:2:length(seeds)
@@ -59,7 +63,7 @@ function part_two(seeds, maps)
         for map in maps
 
             # track the ranges that have been converted and those that need doing
-            done_ranges = []
+            done_ranges = Array{Array{Int}}(undef, 0)
             todo_ranges = ranges
 
             # keep going until there are no ranges left
@@ -120,12 +124,10 @@ function part_two(seeds, maps)
 end
 
 function main()
-    seeds, maps = get_input()
-
-    println("PART ONE: ", part_one(seeds, maps))
-    @time part_one(seeds, maps)
-    println("PART TWO: ", part_two(seeds, maps))
-    @time part_two(seeds, maps)
+    println("PART ONE: ", part_one())
+    @btime part_one()
+    println("PART TWO: ", part_two())
+    @btime part_two()
 end
 
 main()
