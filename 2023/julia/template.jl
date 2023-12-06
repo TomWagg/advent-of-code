@@ -25,3 +25,5 @@ function main()
     println("PART TWO: ", part_two())
     @time part_two()
 end
+
+main()
