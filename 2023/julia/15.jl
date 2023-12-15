@@ -1,12 +1,5 @@
 using DataStructures
-
-function HASH(s::AbstractString, value=0)
-    for c in s
-        value = mod((value + Int(c)) * 17, 256)
-    end
-    return value
-end
-
+HASH(s::AbstractString) = foldl((l, r) -> mod(17 * (l + r), 256), Int.(collect(s)); init=0)
 println("PART ONE: ", sum(HASH.(split(read("../inputs/15.txt", String), ","))))
 boxes = [OrderedDict{String, Int}() for _ in 1:256]
 for seq in split(read("../inputs/15.txt", String), ",")
