@@ -1,8 +1,8 @@
 const int_to_offset = Dict('0'=>[0, 1], '1'=>[-1, 0], '2'=>[0, -1], '3'=>[1, 0])
 const dir_to_offset = Dict("U"=>[1, 0], "D"=>[-1, 0], "L"=>[0, -1], "R"=>[0, 1])
 
-shoelace(v) = sum(v[:, 1] .* circshift(v, -1)[:, 2] .- v[:, 2] .* circshift(v, -1)[:, 1]) ÷ 2
-function lagoon_size(dirs, sizes)
+shoelace(v::Matrix{Int}) = sum(v[:, 1] .* circshift(v, -1)[:, 2] .- v[:, 2] .* circshift(v, -1)[:, 1]) ÷ 2
+function lagoon_size(dirs::Vector{Vector{Int}}, sizes::Vector{Int})
     vertices = mapreduce(permutedims, vcat, accumulate(.+, pushfirst!(dirs .* sizes, [1, 1])))
     return sum(sizes) + shoelace(vertices) + 1 - sum(sizes) ÷ 2
 end
