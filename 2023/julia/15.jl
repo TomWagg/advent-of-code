@@ -1,5 +1,5 @@
 using DataStructures
-HASH(s::AbstractString) = foldl((l, r) -> mod(17 * (l + r), 256), Int.(collect(s)); init=0)
+HASH(s::AbstractString) = foldl((l, r) -> (17 * Int(l + r)) % 256, s; init=0)
 println("PART ONE: ", sum(HASH.(split(read("../inputs/15.txt", String), ","))))
 boxes = [OrderedDict{String, Int}() for _ in 1:256]
 for seq in split(read("../inputs/15.txt", String), ",")
@@ -12,4 +12,4 @@ for seq in split(read("../inputs/15.txt", String), ",")
         delete!(boxes[HASH(label) + 1], label)
     end
 end
-println("PART TWO: ", sum([i * sum(values(boxes[i]) .* range(1, length(boxes[i]))) for i in eachindex(boxes)]))
+println("PART TWO: ", sum([i * sum(values(box) .* range(1, length(box))) for (i, box) in enumerate(boxes)]))
