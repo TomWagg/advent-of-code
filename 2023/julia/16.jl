@@ -1,23 +1,5 @@
 using BenchmarkTools
 
-function get_input()
-    n_row, n_col = 0, 0
-    file_path = "../inputs/16.txt"
-    open(file_path, "r") do input
-        for line in eachline(input)
-            n_row += 1
-            n_col = length(line)
-        end
-    end
-    grid = Matrix{Char}(undef, (n_row, n_col))
-    open(file_path, "r") do input
-        for (i, line) in enumerate(eachline(input))
-            grid[i, :] = only.(split(line, ""))
-        end
-    end
-    return grid
-end
-
 function test_grid_energy(grid::Matrix{Char}, start=(1, 1, 0, 1))
     # track which grid points have been energised
     energised = falses(size(grid))
@@ -84,9 +66,9 @@ function part_two(grid::Matrix{Char})
     return best_energy
 end
 
-grid = get_input()
+grid = mapreduce(permutedims, vcat, map(x->only.(split(x, "")), split(read("../inputs/16.txt", String), "\n")))
 println("PART ONE: ", test_grid_energy(grid))
-@btime test_grid_energy(grid)                       # ~0.7ms
+# @btime test_grid_energy(grid)                       # ~0.7ms
 
 println("PART TWO: ", part_two(grid))
-@btime part_two(grid)                               # ~240ms
+# @btime part_two(grid)                               # ~240ms
