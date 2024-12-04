@@ -25,3 +25,5 @@ Manifest.toml
 
 *.exe
 */inputs/*
+
+settings.json
