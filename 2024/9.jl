@@ -36,17 +36,20 @@ function part_two()
     discmap_str = read("inputs/9.txt", String)
     discmap = parse.(Int, collect(discmap_str))
     
-    file_pos = Vector{Vector{Int}}(undef, 0)
-    gaps = Vector{Vector{Int}}(undef, 0)
+    files = Vector{Tuple{Int, Int}}(undef, 0)
+    gaps = Vector{Tuple{Int, Int}}(undef, 0)
 
+    # save the start locations and length of each file/gap
     start_loc = 0
     for (i, count) in enumerate(discmap)
-        push!(isodd(i - 1) ? gaps : file_pos, [start_loc, count])
+        push!(isodd(i - 1) ? gaps : files, (start_loc, count))
         start_loc += count
     end
 
     checksum = 0
-    for (rev_file_ind, file) in enumerate(reverse(file_pos))
+    # go through the files in descending order
+    for (rev_file_ind, file) in enumerate(reverse(files))
+        file_ind = (length(files) - rev_file_ind)
 
         for (i, gap) in enumerate(gaps)
             # don't bother once no gaps before file
@@ -57,11 +60,10 @@ function part_two()
             # if the gap is larger than the file
             if gap[2] > file[2]
                 # move the file into the gap
-                file[1] = gap[1]
+                files[file_ind + 1] = (gap[1], file[2])
 
                 # move and shrink the gap
-                gap[1] += file[2]
-                gap[2] -= file[2]
+                gaps[i] = (gap[1] + file[2], gap[2] - file[2])
 
                 # done with this file
                 break
@@ -69,7 +71,7 @@ function part_two()
             # if the gap is just large enough for the file
             elseif gap[2] == file[2]
                 # move the file
-                file[1] = gap[1]
+                files[file_ind + 1] = (gap[1], file[2])
 
                 # delete the gap
                 deleteat!(gaps, i)
@@ -78,8 +80,9 @@ function part_two()
         end
 
         # calculate the checksum for this file
+        file = files[file_ind + 1]
         for i in file[1]:file[1] + file[2] - 1
-            checksum += (length(file_pos) - rev_file_ind) * i
+            checksum += file_ind * i
         end
     end
     return checksum
