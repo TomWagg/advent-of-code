@@ -1,13 +1,9 @@
-# using DelimitedFiles
-# using BenchmarkTools
-
 const mul_regex = r"(?<=mul\()(?<left>[0-9]+),(?<right>[0-9]+)(?=\))"
 const mul2_regex = r"((?<=mul\()(?<left>[0-9]+),(?<right>[0-9]+)(?=\))|do\(\)|don't\(\))"
 
 
 function part_one(instructions)
     total = 0
-    @show matchall(mul_regex, instructions)
     for (left, right) in eachmatch(mul_regex, instructions)
         total += parse(Int, left) * parse(Int, right)
     end

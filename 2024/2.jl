@@ -4,8 +4,7 @@
 function get_input()
     levels = Vector{Vector{Int}}(undef, 0)
     for line in eachsplit(read("inputs/2.txt", String), '\n')
-        vals = parse.(Int, split(line, " "))
-        push!(levels, vals)
+        push!(levels, parse.(Int, split(line, " ")))
     end
     return levels
 end
@@ -23,8 +22,7 @@ function level_is_valid(level::Vector{Int})
 end
 
 function part_one()
-    levels = get_input()
-    return mapreduce(level->level_is_valid(level), +, levels)
+    return mapreduce(level->level_is_valid(level), +, get_input())
 end
 
 function part_two()
@@ -35,7 +33,7 @@ function part_two()
             n_safe += 1
             continue
         end
-        for i in 1:length(level)
+        for i in eachindex(level)
             new_level = deleteat!(copy(level), i)
             if level_is_valid(new_level)
                 n_safe += 1
@@ -50,7 +48,7 @@ function main()
     println("PART ONE: ", part_one())
     @time part_one()
     println("PART TWO: ", part_two())
-    # @time part_two()
+    @time part_two()
 end
 
 main()

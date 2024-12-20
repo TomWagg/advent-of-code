@@ -1,20 +1,12 @@
 using DataStructures
 
 function get_input()
-    switch = false
+    ordering_str, update_str = split(read("inputs/5.txt", String), "\n\n")
     ordering = DefaultDict{Int, Vector{Int}}(Vector{Int})
-    updates = []
-    open("inputs/5.txt", "r") do input
-        for line in eachline(input)
-            if line == ""
-                switch = true
-            elseif switch
-                push!(updates, parse.(Int, split(line, ",")))
-            else
-                (left, right) = parse.(Int, split(line, "|"))
-                push!(ordering[left], right)
-            end
-        end
+    updates = [parse.(Int, split(line, ",")) for line in split(update_str, "\n")]
+    for line in split(ordering_str, "\n")
+        (left, right) = parse.(Int, split(line, "|"))
+        push!(ordering[left], right)
     end
     return ordering, updates
 end
@@ -44,13 +36,7 @@ end
 
 function part_one()
     ordering, updates = get_input()
-    total = 0
-    for update in updates
-        if update_is_valid(update, ordering)
-            total += update[length(update) ÷ 2 + 1]
-        end
-    end
-    return total
+    return mapreduce(u->update_is_valid(u, ordering) ? u[length(u) ÷ 2 + 1] : 0, +, updates)
 end
 
 function part_two()
